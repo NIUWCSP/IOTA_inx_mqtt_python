@@ -2,7 +2,7 @@ import asyncio
 import websockets
 
 # INX-MQTT WebSocket settings
-WS_HOST = 'inx-mqtt'
+WS_HOST = '120.101.8.113'
 WS_PORT = 1888
 
 # INX-MQTT topics
