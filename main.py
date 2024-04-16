@@ -1,31 +1,26 @@
-import paho.mqtt.client as mqtt
+import asyncio
+import websockets
 
-# MQTT broker settings
-MQTT_BROKER_HOST = '120.101.8.113'
-MQTT_BROKER_PORT = 1888
+# INX-MQTT WebSocket settings
+WS_HOST = 'inx-mqtt'
+WS_PORT = 1888
 
 # INX-MQTT topics
 TOPIC_CONFIRMED = '$IOTA/tangle/confirmed'
 TOPIC_UNCONFIRMED = '$IOTA/tangle/unconfirmed'
 
-def on_connect(client, userdata, flags, rc):
-    print('Connected to INX-MQTT (result code: %s)' % rc)
+async def subscribe(websocket):
     # subscribe to topics
-    client.subscribe(TOPIC_CONFIRMED)
-    client.subscribe(TOPIC_UNCONFIRMED)
+    await websocket.send(TOPIC_CONFIRMED)
+    await websocket.send(TOPIC_UNCONFIRMED)
 
-def on_message(client, userdata, msg):
-    print('Received message on topic %s: %s' % (msg.topic, msg.payload))
+async def on_message(websocket, path):
+    async for message in websocket:
+        print('Received message on topic %s: %s' % (path, message))
 
-# create MQTT client
-client = mqtt.Client()
+# create WebSocket client
+start_server = websockets.serve(on_message, WS_HOST, WS_PORT, ping_interval=None, ping_timeout=None)
 
-# set callback functions
-client.on_connect = on_connect
-client.on_message = on_message
-
-# connect to MQTT broker
-client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
-
-# start MQTT client loop
-client.loop_forever()
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_until_complete(subscribe(start_server.ws_server.connection_made_future()))
+asyncio.get_event_loop().run_forever()
